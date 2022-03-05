@@ -14,72 +14,145 @@
 
 using namespace jungles;
 
-TEST_CASE("RingBuffer stores data", "[ring_buffer]")
+TEST_CASE("RingBuffer stores and loads data properly, before cycle is reached", "[ring_buffer]")
 {
-    SECTION("Data is stored and loaded before cycle is reached")
+    RingBuffer<unsigned, 8> rb;
+
+    SECTION("One by one")
     {
-        RingBuffer<unsigned, 8> rb;
-
-        SECTION("One by one")
         {
-            {
-                rb.push(1000);
-                REQUIRE(rb.pop() == 1000);
-            }
-
-            {
-                rb.push(2000);
-                REQUIRE(rb.pop() == 2000);
-            }
+            rb.push(1000);
+            REQUIRE(rb.pop() == 1000);
         }
 
-        SECTION("Multiple stores and then multiple loads")
         {
-            rb.push(10);
-            rb.push(11);
-            rb.push(12);
-            rb.push(13);
-
-            REQUIRE(rb.pop() == 10);
-            REQUIRE(rb.pop() == 11);
-            REQUIRE(rb.pop() == 12);
-            REQUIRE(rb.pop() == 13);
+            rb.push(2000);
+            REQUIRE(rb.pop() == 2000);
         }
     }
 
-    SECTION("Data is stored and loaded after cycle is reached")
+    SECTION("Multiple stores and then multiple loads")
     {
-        RingBuffer<unsigned, 4> rb;
+        rb.push(10);
+        rb.push(11);
+        rb.push(12);
+        rb.push(13);
 
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
+        REQUIRE(rb.pop() == 10);
+        REQUIRE(rb.pop() == 11);
+        REQUIRE(rb.pop() == 12);
+        REQUIRE(rb.pop() == 13);
+    }
+}
 
-        SECTION("One by one")
+TEST_CASE("RingBuffer stores and loads data properly, after cycle is reached", "[ring_buffer]")
+{
+    RingBuffer<unsigned, 4> rb;
+
+    rb.push(0);
+    rb.pop();
+    rb.push(0);
+    rb.pop();
+    rb.push(0);
+    rb.pop();
+
+    SECTION("One by one")
+    {
         {
-            {
-                rb.push(1000);
-                REQUIRE(rb.pop() == 1000);
-            }
+            rb.push(1000);
+            REQUIRE(rb.pop() == 1000);
+        }
 
+        {
+            rb.push(2000);
+            REQUIRE(rb.pop() == 2000);
+        }
+    }
+
+    SECTION("Multiple stores and then multiple loads")
+    {
+        rb.push(10);
+        rb.push(11);
+        rb.push(12);
+
+        REQUIRE(rb.pop() == 10);
+        REQUIRE(rb.pop() == 11);
+        REQUIRE(rb.pop() == 12);
+    }
+}
+
+TEST_CASE("RingBuffer claims to be empty", "[ring_buffer]")
+{
+    RingBuffer<unsigned, 4> rb;
+
+    SECTION("When no operation was done")
+    {
+        REQUIRE(rb.is_empty());
+    }
+
+    SECTION("When all elements are pushed and popped one by one")
+    {
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+
+        REQUIRE(rb.is_empty());
+    }
+
+    SECTION("After multiple stores, and then multiple loads")
+    {
+        rb.push(0);
+        rb.push(0);
+        rb.push(0);
+        rb.pop();
+        rb.pop();
+        rb.pop();
+
+        REQUIRE(rb.is_empty());
+    }
+
+    GIVEN("A cycle")
+    {
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+
+        WHEN("Elements are pushed and popped one by one")
+        {
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+
+            THEN("Claims to be empty")
             {
-                rb.push(2000);
-                REQUIRE(rb.pop() == 2000);
+                REQUIRE(rb.is_empty());
             }
         }
 
-        SECTION("Multiple stores and then multiple loads")
+        WHEN("Multiple stores are performed")
         {
-            rb.push(10);
-            rb.push(11);
-            rb.push(12);
+            rb.push(0);
+            rb.push(0);
+            rb.push(0);
 
-            REQUIRE(rb.pop() == 10);
-            REQUIRE(rb.pop() == 11);
-            REQUIRE(rb.pop() == 12);
+            AND_WHEN("All of the elements are popped")
+            {
+                rb.pop();
+                rb.pop();
+                rb.pop();
+
+                THEN("Claims to be empty")
+                {
+                    REQUIRE(rb.is_empty());
+                }
+            }
         }
     }
 
@@ -99,182 +172,136 @@ TEST_CASE("RingBuffer stores data", "[ring_buffer]")
 
         REQUIRE(rb.is_empty());
     }
+}
 
-    SECTION("Claims to be empty")
+TEST_CASE("RingBuffer claims not to be empty", "[ring_buffer]")
+{
+    RingBuffer<unsigned, 4> rb;
+
+    SECTION("When one element is not popped")
     {
-        RingBuffer<unsigned, 4> rb;
-
-        SECTION("When no operation was done")
+        SECTION("One by one")
         {
-            REQUIRE(rb.is_empty());
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+
+            REQUIRE(not rb.is_empty());
         }
 
-        SECTION("When all elements are popped")
+        SECTION("After multiple stores, and then multiple loads")
         {
-            SECTION("One by one")
+            rb.push(0);
+            rb.push(0);
+            rb.push(0);
+            rb.pop();
+            rb.pop();
+
+            REQUIRE(not rb.is_empty());
+        }
+
+        GIVEN("A cycle")
+        {
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+
+            WHEN("Elements are pushed and popped one by one, but one pop operation is skipped")
             {
                 rb.push(0);
                 rb.pop();
                 rb.push(0);
-                rb.pop();
 
-                REQUIRE(rb.is_empty());
+                THEN("Claims not empty")
+                {
+                    REQUIRE(not rb.is_empty());
+                }
             }
 
-            SECTION("After multiple stores, and then multiple loads")
+            WHEN("Multiple elements are pushed")
             {
                 rb.push(0);
                 rb.push(0);
                 rb.push(0);
-                rb.pop();
-                rb.pop();
-                rb.pop();
 
-                REQUIRE(rb.is_empty());
-            }
+                AND_WHEN("All the elements are popped except one")
+                {
+                    rb.pop();
+                    rb.pop();
 
-            SECTION("After a cycle, and then one by one")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-
-                REQUIRE(rb.is_empty());
-            }
-
-            SECTION("After a cycle, and then multiple loads and stores")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-
-                rb.push(0);
-                rb.push(0);
-                rb.push(0);
-                rb.pop();
-                rb.pop();
-                rb.pop();
-
-                REQUIRE(rb.is_empty());
+                    THEN("Claims not empty")
+                    {
+                        REQUIRE(not rb.is_empty());
+                    }
+                }
             }
         }
     }
 
-    SECTION("Claims to be not empty")
+    SECTION("When multiple elements are not popped")
     {
-        RingBuffer<unsigned, 4> rb;
-
-        SECTION("When one element is not popped")
+        SECTION("Before a cycle")
         {
-            SECTION("One by one")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
+            rb.push(0);
+            rb.push(0);
+            rb.push(0);
 
-                REQUIRE(not rb.is_empty());
-            }
-
-            SECTION("After multiple stores, and then multiple loads")
-            {
-                rb.push(0);
-                rb.push(0);
-                rb.push(0);
-                rb.pop();
-                rb.pop();
-
-                REQUIRE(not rb.is_empty());
-            }
-
-            SECTION("After a cycle, and then one by one")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-
-                REQUIRE(not rb.is_empty());
-            }
-
-            SECTION("After a cycle, and then multiple loads and stores")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-
-                rb.push(0);
-                rb.push(0);
-                rb.push(0);
-                rb.pop();
-                rb.pop();
-
-                REQUIRE(not rb.is_empty());
-            }
+            REQUIRE(not rb.is_empty());
         }
 
-        SECTION("When multiple elements are not popped")
+        GIVEN("A cycle")
         {
-            SECTION("Before a cycle")
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+            rb.push(0);
+            rb.pop();
+
+            WHEN("Multiple elements are pushed, without overflowing")
             {
                 rb.push(0);
                 rb.push(0);
                 rb.push(0);
 
-                REQUIRE(not rb.is_empty());
-            }
-
-            SECTION("After a cycle")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-                rb.pop();
-
-                rb.push(0);
-                rb.push(0);
-                rb.push(0);
-
-                REQUIRE(not rb.is_empty());
+                THEN("Claims not empty")
+                {
+                    REQUIRE(not rb.is_empty());
+                }
             }
         }
     }
+}
 
-    SECTION("Throws when popping items from empty buffer")
+TEST_CASE("RingBuffer throws when popping items from empty buffer", "[ring_buffer]")
+{
+    using RB = RingBuffer<unsigned, 4>;
+    RB rb;
+
+    SECTION("Just after the creation")
     {
-        using RB = RingBuffer<unsigned, 4>;
-        RB rb;
+        REQUIRE_THROWS_WITH(rb.pop(), "No element to pop");
+        REQUIRE_THROWS_AS(rb.pop(), RB::Error);
+    }
+
+    SECTION("After getting filled and emptied")
+    {
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+        rb.push(0);
+        rb.pop();
+
         REQUIRE_THROWS_WITH(rb.pop(), "No element to pop");
         REQUIRE_THROWS_AS(rb.pop(), RB::Error);
     }
