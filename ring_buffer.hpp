@@ -9,8 +9,6 @@
 #include <array>
 #include <concepts>
 #include <cstddef>
-#include <exception>
-#include <stdexcept>
 #include <type_traits>
 
 namespace jungles
@@ -39,25 +37,13 @@ class RingBuffer
         head = (head + 1) & Mask;
     }
 
-    T pop()
+    T pop() noexcept(std::is_nothrow_move_assignable_v<T>)
     {
-        if (is_empty())
-            throw Error{"No element to pop"};
 
         auto result{std::move(underlying_buffer[tail])};
         tail = (tail + 1) & Mask;
         return result;
     }
-
-    bool is_empty() const noexcept
-    {
-        return head == tail;
-    }
-
-    struct Error : std::runtime_error
-    {
-        using std::runtime_error::runtime_error;
-    };
 
   private:
     std::array<T, Size> underlying_buffer;

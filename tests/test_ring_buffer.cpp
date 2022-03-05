@@ -81,229 +81,32 @@ TEST_CASE("RingBuffer stores and loads data properly, after cycle is reached", "
     }
 }
 
-TEST_CASE("RingBuffer claims to be empty", "[ring_buffer]")
+TEST_CASE("RingBuffer overflows", "[ring_buffer]")
 {
     RingBuffer<unsigned, 4> rb;
 
-    SECTION("When no operation was done")
+    SECTION("Data is retrieved from a full buffer")
     {
-        REQUIRE(rb.is_empty());
+        rb.push(10);
+        rb.push(11);
+        rb.push(12);
+        rb.push(13);
+
+        REQUIRE(rb.pop() == 10);
+        REQUIRE(rb.pop() == 11);
+        REQUIRE(rb.pop() == 12);
+        REQUIRE(rb.pop() == 13);
     }
 
-    SECTION("When all elements are pushed and popped one by one")
+    SECTION("Overflowing makes the buffer cleared")
     {
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-
-        REQUIRE(rb.is_empty());
-    }
-
-    SECTION("After multiple stores, and then multiple loads")
-    {
-        rb.push(0);
-        rb.push(0);
-        rb.push(0);
-        rb.pop();
-        rb.pop();
-        rb.pop();
-
-        REQUIRE(rb.is_empty());
-    }
-
-    GIVEN("A cycle")
-    {
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-
-        WHEN("Elements are pushed and popped one by one")
-        {
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-
-            THEN("Claims to be empty")
-            {
-                REQUIRE(rb.is_empty());
-            }
-        }
-
-        WHEN("Multiple stores are performed")
-        {
-            rb.push(0);
-            rb.push(0);
-            rb.push(0);
-
-            AND_WHEN("All of the elements are popped")
-            {
-                rb.pop();
-                rb.pop();
-                rb.pop();
-
-                THEN("Claims to be empty")
-                {
-                    REQUIRE(rb.is_empty());
-                }
-            }
-        }
-    }
-
-    SECTION("Overflow makes the buffer empty")
-    {
-        RingBuffer<unsigned, 4> rb;
-
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-
+        rb.push(10);
         rb.push(11);
         rb.push(12);
         rb.push(13);
         rb.push(14);
 
-        REQUIRE(rb.is_empty());
-    }
-}
-
-TEST_CASE("RingBuffer claims not to be empty", "[ring_buffer]")
-{
-    RingBuffer<unsigned, 4> rb;
-
-    SECTION("When one element is not popped")
-    {
-        SECTION("One by one")
-        {
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-
-            REQUIRE(not rb.is_empty());
-        }
-
-        SECTION("After multiple stores, and then multiple loads")
-        {
-            rb.push(0);
-            rb.push(0);
-            rb.push(0);
-            rb.pop();
-            rb.pop();
-
-            REQUIRE(not rb.is_empty());
-        }
-
-        GIVEN("A cycle")
-        {
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-
-            WHEN("Elements are pushed and popped one by one, but one pop operation is skipped")
-            {
-                rb.push(0);
-                rb.pop();
-                rb.push(0);
-
-                THEN("Claims not empty")
-                {
-                    REQUIRE(not rb.is_empty());
-                }
-            }
-
-            WHEN("Multiple elements are pushed")
-            {
-                rb.push(0);
-                rb.push(0);
-                rb.push(0);
-
-                AND_WHEN("All the elements are popped except one")
-                {
-                    rb.pop();
-                    rb.pop();
-
-                    THEN("Claims not empty")
-                    {
-                        REQUIRE(not rb.is_empty());
-                    }
-                }
-            }
-        }
-    }
-
-    SECTION("When multiple elements are not popped")
-    {
-        SECTION("Before a cycle")
-        {
-            rb.push(0);
-            rb.push(0);
-            rb.push(0);
-
-            REQUIRE(not rb.is_empty());
-        }
-
-        GIVEN("A cycle")
-        {
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-            rb.push(0);
-            rb.pop();
-
-            WHEN("Multiple elements are pushed, without overflowing")
-            {
-                rb.push(0);
-                rb.push(0);
-                rb.push(0);
-
-                THEN("Claims not empty")
-                {
-                    REQUIRE(not rb.is_empty());
-                }
-            }
-        }
-    }
-}
-
-TEST_CASE("RingBuffer throws when popping items from empty buffer", "[ring_buffer]")
-{
-    using RB = RingBuffer<unsigned, 4>;
-    RB rb;
-
-    SECTION("Just after the creation")
-    {
-        REQUIRE_THROWS_WITH(rb.pop(), "No element to pop");
-        REQUIRE_THROWS_AS(rb.pop(), RB::Error);
-    }
-
-    SECTION("After getting filled and emptied")
-    {
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-        rb.push(0);
-        rb.pop();
-
-        REQUIRE_THROWS_WITH(rb.pop(), "No element to pop");
-        REQUIRE_THROWS_AS(rb.pop(), RB::Error);
+        REQUIRE(rb.pop() == 14);
     }
 }
 
