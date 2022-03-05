@@ -33,7 +33,7 @@ class RingBuffer
     static constexpr inline auto Mask{Size - 1};
 
   public:
-    void push(T value)
+    void push(T value) noexcept(std::is_nothrow_move_assignable_v<T>)
     {
         underlying_buffer[head] = std::move(value);
         head = (head + 1) & Mask;
