@@ -4,7 +4,7 @@ Yet another RingBuffer, with features:
 
 * C++20 (uses concepts),
 * lock-free, no dependency to `<mutex>`, etc.,
-* can be easily used on embedded devices - is leightweight and no external dependencies, 
+* can be easily used on embedded devices - is leightweight and has no external dependencies, 
 * simple `push()`, `pop()` interface,
 * no control on overflow: `push()` called on the full buffer is allowed, thus will clear the buffer,
 * calling `pop()` on empty buffer will throw,
