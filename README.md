@@ -24,7 +24,7 @@ Use CMake `FetchContent`:
 include(FetchContent)
 FetchContent_Declare(
     JunglesRingBuffer
-    GIT_REPOSITORY https://github.com/jungles/RingBuffer.git
+    GIT_REPOSITORY https://github.com/KKoovalsky/RingBuffer.git
     GIT_TAG <grab-the-latest-git-tag>
 )
 FetchContent_MakeAvailable(JunglesRingBuffer)
