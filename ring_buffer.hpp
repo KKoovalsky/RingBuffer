@@ -7,19 +7,26 @@
 #define RING_BUFFER_HPP
 
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <exception>
 #include <stdexcept>
+#include <type_traits>
 
 namespace jungles
 {
 
-// TODO:
-// 1. T must be default constructible.
-// 2. Size must be power of two concept.
-// 3. push() shall be noexcept if std::move on T is noexcept
-// 4. Tests shall be Given, When, Then ...
-template<typename T, std::size_t Size>
+template<typename T>
+concept DefaultConstructible = std::is_default_constructible_v<T>;
+
+template<unsigned Number>
+concept PowerOfTwo = requires()
+{
+    requires not(Number == 0) and not(Number & (Number - 1));
+};
+
+template<DefaultConstructible T, unsigned Size>
+requires PowerOfTwo<Size>
 class RingBuffer
 {
   private:
