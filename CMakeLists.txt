@@ -12,7 +12,7 @@ add_library(jungles_ring_buffer INTERFACE)
 target_include_directories(jungles_ring_buffer INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 add_library(jungles::ring_buffer ALIAS jungles_ring_buffer)
 
-set(JUNGLES_RING_BUFFER_ENABLE_TESTING OFF CACHE BOOL "Enables self-testing of the library")
+option(JUNGLES_RING_BUFFER_ENABLE_TESTING "Enables self-testing of the library" OFF)
 if(JUNGLES_RING_BUFFER_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
