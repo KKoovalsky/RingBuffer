@@ -118,7 +118,7 @@ TEMPLATE_TEST_CASE_SIG("Various RingBuffer sizes are handled", "[ring_buffer]", 
 
     std::vector<unsigned> results;
 
-    RingBuffer<unsigned, 4> rb;
+    RingBuffer<unsigned, Size> rb;
     for (auto input : inputs)
     {
         rb.push(input);
