@@ -25,12 +25,10 @@ concept PowerOfTwo = requires()
 
 template<DefaultConstructible T, unsigned Size>
 requires PowerOfTwo<Size>
-class RingBuffer
+struct RingBuffer
 {
-  private:
     static constexpr inline auto Mask{Size - 1};
 
-  public:
     void push(T value) noexcept(std::is_nothrow_move_assignable_v<T>)
     {
         underlying_buffer[head] = std::move(value);
