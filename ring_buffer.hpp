@@ -45,7 +45,6 @@ class RingBuffer
         return result;
     }
 
-  private:
     std::array<T, Size> underlying_buffer;
     unsigned head{0};
     unsigned tail{0};
